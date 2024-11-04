@@ -1,34 +1,39 @@
-import requests  # Importing requests to send HTTP requests
+# final_project/emotion_detection.py
+import requests
+import json
 
-def emotion_detector(text_to_analyse):
-    """
-    Function to detect emotions in the given text using Watson's Emotion Predict function.
-
-    Parameters:
-        text_to_analyze (str): The text to analyze for emotions.
-
-    Returns:
-        dict: The emotion analysis results containing the detected emotions and their scores.
-    """
-    # Define the API URL and Headers
-    url = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
+def emotion_detector(text_to_analyze):
+    url = "https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict"
     headers = {
         "grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"
     }
-
-    # Set up the JSON payload
-    input_json = {
+    data = {
         "raw_document": {
-            "text": text_to_analyse
+            "text": text_to_analyze
         }
     }
-
-    # Send a POST request to the Emotion Predict endpoint
-    response = requests.post(url, headers=headers, json=input_json)
     
-    # Check if the request was successful
-    if response.status_code == 200:
-        return response.json()  # Return the JSON response if successful
-    else:
-        # Return an error message if the request fails
-        return {"error": f"Request failed with status code {response.status_code}"}
+    # Sending the POST request to the Watson NLP EmotionPredict function
+    response = requests.post(url, headers=headers, json=data)
+    
+    # Convert the response to JSON
+    response_data = response.json()
+    
+    # Extract emotion scores from the first element of 'emotionPredictions'
+    emotions = response_data['emotionPredictions'][0]['emotion']
+    
+    # Determine the dominant emotion
+    dominant_emotion = max(emotions, key=emotions.get)
+    
+    # Construct the final dictionary
+    emotion_dict = {
+        'anger': emotions.get('anger', 0),
+        'disgust': emotions.get('disgust', 0),
+        'fear': emotions.get('fear', 0),
+        'joy': emotions.get('joy', 0),
+        'sadness': emotions.get('sadness', 0),
+        'dominant_emotion': dominant_emotion
+    }
+    
+    # Return the formatted dictionary
+    return json.dumps(emotion_dict, indent=4)
